@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "audit",schema = "skyscraper")
-public class Audit extends PanacheEntityBase {
+public class AuditEntity extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long id;

@@ -13,7 +13,7 @@ public class SkyscraperQuarkusApplication implements QuarkusApplication {
 
     @Override
     public int run(String... args) throws Exception {
-        File test = new File("E:\\11494_H_22000.ts");
+        File test = new File("/home/ft/Schreibtisch/test3.ts");
         skyscraperService.scrapeFile(test);
         return 0;
     }
