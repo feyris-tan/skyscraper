@@ -36,3 +36,4 @@ release.properties
 /src/main/resources/application.properties
 /test2.cnf
 /test2.ts
+/src/main/resources/sql.properties
