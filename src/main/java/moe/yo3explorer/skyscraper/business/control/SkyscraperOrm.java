@@ -1,16 +1,19 @@
 package moe.yo3explorer.skyscraper.business.control;
 
-import moe.yo3explorer.dvb4j.model.enums.FEC;
-import moe.yo3explorer.dvb4j.model.enums.ModulationType;
-import moe.yo3explorer.dvb4j.model.enums.Polarization;
+import moe.yo3explorer.dvb4j.model.enums.*;
 import moe.yo3explorer.skyscraper.business.entity.AuditOperation;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
+import moe.yo3explorer.skyscraper.business.entity.ServiceEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
+import moe.yo3explorer.skyscraper.business.entity.pojo.ScheduledEvent;
+import moe.yo3explorer.skyscraper.business.entity.pojo.Service;
+import moe.yo3explorer.skyscraper.business.entity.pojo.Transponder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -53,14 +56,14 @@ public class SkyscraperOrm
 
     public List<TransponderEntity> getTranspondersForSatellite(int satId) throws SQLException {
         LinkedList<TransponderEntity> result = new LinkedList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM transponders WHERE satellite = ?");
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM transponders WHERE satellite = ? ORDER BY id");
         preparedStatement.setInt(1,satId);
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next())
         {
             TransponderEntity transponderEntity = new TransponderEntity();
             transponderEntity.id = resultSet.getInt(1);
-            transponderEntity.dateadded = resultSet.getDate(2);
+            transponderEntity.dateadded = resultSet.getTimestamp(2);
             transponderEntity.frequency = resultSet.getDouble(3);
             transponderEntity.polarization = Polarization.valueOf(resultSet.getString(4));
             transponderEntity.symbolrate = resultSet.getInt(5);
@@ -79,11 +82,11 @@ public class SkyscraperOrm
 
             Object lastscanned = resultSet.getObject(12);
             if (lastscanned != null)
-                transponderEntity.lastscanned = (Date)lastscanned;
+                transponderEntity.lastscanned = (Timestamp)lastscanned;
 
             Object lastvalid = resultSet.getObject(13);
             if (lastvalid != null)
-                transponderEntity.lastvalid = (java.sql.Date)lastvalid;
+                transponderEntity.lastvalid = (Timestamp) lastvalid;
 
             result.add(transponderEntity);
         }
@@ -152,20 +155,211 @@ public class SkyscraperOrm
     }
 
     public void markTransponderAsScanned(@NotNull TransponderEntity transponderEntity) throws SQLException {
-        transponderEntity.lastscanned = new java.sql.Date(new java.util.Date().getTime());
+        transponderEntity.lastscanned = new Timestamp(System.currentTimeMillis());
 
         PreparedStatement preparedStatement = connection.prepareStatement("UPDATE transponders SET lastscanned = ? WHERE id = ?");
-        preparedStatement.setDate(1,transponderEntity.lastscanned);
+        preparedStatement.setTimestamp(1,transponderEntity.lastscanned);
         preparedStatement.setInt(2,transponderEntity.id);
         preparedStatement.executeUpdate();
     }
 
     public void markTransponderAsValid(@NotNull TransponderEntity transponderEntity) throws SQLException {
-        transponderEntity.lastvalid = new java.sql.Date(new java.util.Date().getTime());
+        transponderEntity.lastvalid = new Timestamp(System.currentTimeMillis());
 
         PreparedStatement preparedStatement = connection.prepareStatement("UPDATE transponders SET lastvalid = ? WHERE id = ?");
-        preparedStatement.setDate(1,transponderEntity.lastvalid);
+        preparedStatement.setTimestamp(1,transponderEntity.lastvalid);
         preparedStatement.setInt(2,transponderEntity.id);
         preparedStatement.executeUpdate();
+    }
+
+    public TransponderEntity getTransponder(@NotNull Transponder transponder, @NotNull SatelliteEntity satelliteEntity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM transponders WHERE satellite = ? AND frequency = ? AND polarization = ?");
+        preparedStatement.setInt(1,satelliteEntity.id);
+        preparedStatement.setDouble(2,transponder.frequency);
+        preparedStatement.setString(3,transponder.polarization.toString());
+        TransponderEntity result;
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.next())
+        {
+            result = new TransponderEntity();
+            result.id = resultSet.getInt(1);
+            result.dateadded = resultSet.getTimestamp(2);
+            result.frequency = resultSet.getDouble(3);
+            result.polarization = Polarization.valueOf(resultSet.getString(4));
+            result.symbolrate = resultSet.getInt(5);
+            result.fec = FEC.valueOf(resultSet.getString(6));
+            result.modulation = ModulationType.valueOf(resultSet.getString(7));
+            result.s2 = resultSet.getBoolean(8);
+            result.satellite = resultSet.getInt(9);
+
+            Object network = resultSet.getObject(10);
+            if (network != null)
+                result.network = (Integer)network;
+
+            Object transportstream = resultSet.getObject(11);
+            if (transportstream != null)
+                result.transportstream = (Integer)transportstream;
+
+            Object lastscanned = resultSet.getObject(12);
+            if (lastscanned != null)
+                result.lastscanned = (Timestamp) lastscanned;
+
+            Object lastvalid = resultSet.getObject(13);
+            if (lastvalid != null)
+                result.lastvalid = (Timestamp) lastvalid;
+        }
+        else
+        {
+            result = null;
+        }
+        resultSet.close();
+        preparedStatement.close();
+        return result;
+    }
+
+    public TransponderEntity createTransponder(@NotNull Transponder transponder, @NotNull SatelliteEntity satelliteEntity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement(
+                "INSERT INTO transponders (frequency, polarization, symbolrate, fec, modulation, s2, satellite, network, transportstream) VALUES (?,?,?,?,?,?,?,?,?) RETURNING *");
+        preparedStatement.setDouble(1,transponder.frequency);
+        preparedStatement.setString(2,transponder.polarization.toString());
+        preparedStatement.setInt(3,transponder.symbolrate);
+        preparedStatement.setString(4,transponder.fec.toString());
+        preparedStatement.setString(5,transponder.modulation.toString());
+        preparedStatement.setBoolean(6,transponder.s2);
+        preparedStatement.setInt(7,satelliteEntity.id);
+        preparedStatement.setInt(8,transponder.network.networkId);
+        preparedStatement.setInt(9,transponder.transportStreamId);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        resultSet.next();
+
+        TransponderEntity result = new TransponderEntity();
+        result.id = resultSet.getInt(1);
+        result.dateadded = resultSet.getTimestamp(2);
+        result.frequency = resultSet.getDouble(3);
+        result.polarization = Polarization.valueOf(resultSet.getString(4));
+        result.symbolrate = resultSet.getInt(5);
+        result.fec = FEC.valueOf(resultSet.getString(6));
+        result.modulation = ModulationType.valueOf(resultSet.getString(7));
+        result.s2 = resultSet.getBoolean(8);
+        result.satellite = resultSet.getInt(9);
+
+        Object network = resultSet.getObject(10);
+        if (network != null)
+            result.network = (Integer)network;
+
+        Object transportstream = resultSet.getObject(11);
+        if (transportstream != null)
+            result.transportstream = (Integer)transportstream;
+
+        Object lastscanned = resultSet.getObject(12);
+        if (lastscanned != null)
+            result.lastscanned = (Timestamp) lastscanned;
+
+        Object lastvalid = resultSet.getObject(13);
+        if (lastvalid != null)
+            result.lastvalid = (Timestamp) lastvalid;
+
+        audit(AuditOperation.ADD,Transponder.class,String.format("%s %.3f/%s/%d",satelliteEntity.name,result.frequency,result.polarization.toString(),result.symbolrate));
+        return result;
+    }
+
+    public ServiceEntity getService(@NotNull Service service, @NotNull TransponderEntity transponder) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM services WHERE transponder = ? AND serviceid = ?");
+        ps.setInt(1,transponder.id);
+        ps.setInt(2,service.serviceId);
+        ResultSet resultSet = ps.executeQuery();
+        ServiceEntity result;
+        if (resultSet.next())
+        {
+            result = new ServiceEntity();
+            result.id = resultSet.getInt(1);
+            result.dateadded = resultSet.getDate(2);
+            result.transponder = resultSet.getInt(3);
+            result.serviceid = resultSet.getInt(4);
+            result.name = resultSet.getString(5);
+            result.runningstatus = RunningStatus.valueOf(resultSet.getString(6));
+            result.fta = resultSet.getBoolean(7);
+            String serviceTypeString = resultSet.getString(8);
+            if (serviceTypeString != null)
+                if (!serviceTypeString.equals(""))
+                    result.servicetype = ServiceType.valueOf(resultSet.getString(8));
+
+            Object lastseen = resultSet.getObject(9);
+            if (lastseen != null)
+                result.lastseen = (Timestamp)lastseen;
+        }
+        else
+        {
+            result = null;
+        }
+        return result;
+    }
+
+    public ServiceEntity createService(@NotNull Service service, @NotNull TransponderEntity transponderEntity) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("INSERT INTO services (transponder, serviceid, name, runningstatus, fta, servicetype) VALUES (?,?,?,?,?,?) RETURNING *");
+        ps.setInt(1,transponderEntity.id);
+        ps.setInt(2,service.serviceId);
+        ps.setString(3,service.channelName);
+        ps.setString(4,service.runningStatus.toString());
+        ps.setBoolean(5,service.fta);
+        ps.setString(6,service.serviceType != null ? service.serviceType.toString() : "");
+
+        ResultSet resultSet = ps.executeQuery();
+        resultSet.next();
+
+        ServiceEntity result = new ServiceEntity();
+        result.id = resultSet.getInt(1);
+        result.dateadded = resultSet.getDate(2);
+        result.transponder = resultSet.getInt(3);
+        result.serviceid = resultSet.getInt(4);
+        result.name = resultSet.getString(5);
+        result.runningstatus = RunningStatus.valueOf(resultSet.getString(6));
+        result.fta = resultSet.getBoolean(7);
+        String serviceTypeString = resultSet.getString(8);
+        if (serviceTypeString != null)
+            if (!serviceTypeString.equals(""))
+                result.servicetype = ServiceType.valueOf(resultSet.getString(8));
+
+        Object lastseen = resultSet.getObject(9);
+        if (lastseen != null)
+            result.lastseen = (Timestamp)lastseen;
+
+        audit(AuditOperation.ADD,Service.class,service.channelName);
+        return result;
+    }
+
+    public boolean testForScheduledEvent(@NotNull ScheduledEvent scheduledEvent, @NotNull ServiceEntity serviceEntity) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT dateadded FROM events WHERE service = ? AND starttime = ? AND eventid = ?");
+        preparedStatement.setInt(1,serviceEntity.id);
+        preparedStatement.setTimestamp(2,new Timestamp(scheduledEvent.startTime.getTime()));
+        preparedStatement.setInt(3,scheduledEvent.eventid);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        boolean result = resultSet.next();
+        resultSet.close();
+        preparedStatement.close();
+        return result;
+    }
+
+    public void createScheduledEvent(@NotNull ScheduledEvent scheduledEvent, @NotNull ServiceEntity serviceEntity) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("INSERT INTO events (service, starttime, endtime, runningstatus, eventid, encrypted, title, subtitle, synopsis) VALUES (?,?,?,?,?,?,?,?,?)");
+        ps.setInt(1,serviceEntity.id);
+        ps.setTimestamp(2,new Timestamp(scheduledEvent.startTime.getTime()));
+        ps.setTimestamp(3,new Timestamp(scheduledEvent.endTime.getTime()));
+        ps.setString(4,scheduledEvent.status.toString());
+        ps.setInt(5,scheduledEvent.eventid);
+        ps.setBoolean(6,scheduledEvent.encrypted);
+        ps.setString(7,scheduledEvent.title);
+        ps.setString(8,scheduledEvent.subtitle);
+        ps.setString(9,scheduledEvent.synopsis);
+        ps.executeUpdate();
+    }
+
+    public void markServiceAsSeen(@NotNull ServiceEntity serviceEntity) throws SQLException {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        PreparedStatement ps = connection.prepareStatement("UPDATE services SET lastseen = ? WHERE id = ?");
+        ps.setTimestamp(1,timestamp);
+        ps.setInt(2,serviceEntity.id);
+        ps.executeUpdate();
+        serviceEntity.lastseen = timestamp;
     }
 }

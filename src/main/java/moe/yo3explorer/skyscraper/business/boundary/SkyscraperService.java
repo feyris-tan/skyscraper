@@ -50,8 +50,14 @@ public class SkyscraperService {
             if (sucessful) {
                 orm.markTransponderAsValid(transponderEntity);
                 List<Satellite> satellites = tryScrapeFile(file);
-                for (Satellite satellite : satellites) {
-                    dataMiner.mineFromSatellite(satellite);
+                if (satellites.size() > 0) {
+                    for (Satellite satellite : satellites) {
+                        dataMiner.mineFromSatellite(satellite);
+                    }
+                }
+                else
+                {
+                    throw new RuntimeException("Don't know how to scrape from this transponder.");
                 }
             }
             orm.flushTransaction();

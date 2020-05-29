@@ -5,10 +5,11 @@ import moe.yo3explorer.dvb4j.model.enums.ModulationType;
 import moe.yo3explorer.dvb4j.model.enums.Polarization;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 public class TransponderEntity {
     public int id;
-    public Date dateadded;
+    public Timestamp dateadded;
     public double frequency;
     public Polarization polarization;
     public int symbolrate;
@@ -18,6 +19,6 @@ public class TransponderEntity {
     public int satellite;
     public int network;
     public int transportstream;
-    public Date lastscanned;
-    public Date lastvalid;
+    public Timestamp lastscanned;
+    public Timestamp lastvalid;
 }

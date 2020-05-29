@@ -4,6 +4,7 @@ import moe.yo3explorer.dvb4j.model.enums.RunningStatus;
 import moe.yo3explorer.dvb4j.model.enums.ServiceType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Service {
@@ -29,5 +30,13 @@ public class Service {
             scheduledEventList = new ArrayList<>();
 
         scheduledEventList.add(scheduledEvent);
+    }
+
+    public List<ScheduledEvent> listScheduledEvents()
+    {
+        if (scheduledEventList == null)
+            return Collections.emptyList();
+        else
+            return Collections.unmodifiableList(scheduledEventList);
     }
 }

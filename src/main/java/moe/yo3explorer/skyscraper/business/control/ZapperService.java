@@ -1,6 +1,8 @@
 package moe.yo3explorer.skyscraper.business.control;
 
 import moe.yo3explorer.dvb4j.model.enums.Polarization;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -8,6 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class ZapperService {
+
+    private Logger logger;
+    public ZapperService()
+    {
+        logger = LogManager.getLogger(getClass());
+    }
 
     public boolean isAvailable()
     {
@@ -79,6 +87,7 @@ public class ZapperService {
                 break;
             if (line.startsWith("status "))
             {
+                logger.info(line);
                 if (!line.contains("HAS_LOCK"))
                     mistakes++;
             }

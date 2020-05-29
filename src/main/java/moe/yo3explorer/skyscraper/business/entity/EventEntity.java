@@ -2,14 +2,15 @@ package moe.yo3explorer.skyscraper.business.entity;
 
 import moe.yo3explorer.dvb4j.model.enums.RunningStatus;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class EventEntity {
     public long id;
-    public Date dateadded;
+    public Timestamp dateadded;
     public int service;
-    public Date starttime;
-    public Date endtime;
+    public Timestamp starttime;
+    public Timestamp endtime;
     public RunningStatus runningstatus;
     public int eventid;
     public boolean encrypted;

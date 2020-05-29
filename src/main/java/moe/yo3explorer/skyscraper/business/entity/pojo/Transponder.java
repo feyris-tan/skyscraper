@@ -5,6 +5,7 @@ import moe.yo3explorer.dvb4j.model.enums.ModulationType;
 import moe.yo3explorer.dvb4j.model.enums.Polarization;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
