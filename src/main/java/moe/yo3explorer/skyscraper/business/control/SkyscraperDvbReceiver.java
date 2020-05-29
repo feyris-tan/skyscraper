@@ -4,6 +4,8 @@ import moe.yo3explorer.dvb4j.DvbReceiver;
 import moe.yo3explorer.dvb4j.decoders.DescriptorDecoder;
 import moe.yo3explorer.dvb4j.model.*;
 import moe.yo3explorer.dvb4j.model.descriptors.*;
+import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
+import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
 import moe.yo3explorer.skyscraper.business.entity.pojo.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,8 +83,7 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
         }
     }
 
-    public SkyscraperDvbReceiver() {
-    }
+    public SkyscraperDvbReceiver() { }
 
     @Override public void onNewPatEntry(@NotNull PATEntry patEntry) {
     }

@@ -1,13 +1,14 @@
 package moe.yo3explorer.skyscraper.presentation;
 
-import io.quarkus.runtime.Quarkus;
-import io.quarkus.runtime.annotations.QuarkusMain;
+import moe.yo3explorer.skyscraper.business.boundary.SkyscraperService;
 
-@QuarkusMain
+import java.io.IOException;
+import java.sql.SQLException;
+
 public class Main
 {
-    public static void main(String[] args) {
-        System.out.println("Time to ascend");
-        Quarkus.run(SkyscraperQuarkusApplication.class,args);
+    public static void main(String[] args) throws IOException, SQLException {
+        SkyscraperService skyscraperService = new SkyscraperService();
+        skyscraperService.perform();
     }
 }

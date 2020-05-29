@@ -34,3 +34,5 @@ pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
 /src/main/resources/application.properties
+/test2.cnf
+/test2.ts

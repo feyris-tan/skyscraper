@@ -1,5 +1,6 @@
 package moe.yo3explorer.skyscraper.business.entity.pojo;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,13 @@ public class Satellite {
             return;
 
         transponders.add(transponder);
+    }
+
+    public List<Transponder> getTransponders()
+    {
+        if (transponders == null)
+            return null;
+        return Collections.unmodifiableList(transponders);
     }
 
     @Override
