@@ -8,6 +8,8 @@ import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
 import moe.yo3explorer.skyscraper.business.entity.pojo.ScheduledEvent;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Service;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Transponder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -30,8 +32,12 @@ public class SkyscraperOrm
                 properties.getProperty("username"),
                 properties.getProperty("password"));
         connection.setSchema("skyscraper");
+
+        logger = LogManager.getLogger(getClass());
+        logger.info("Create ORM!");
     }
 
+    private Logger logger;
     private Connection connection;
     
     public List<SatelliteEntity> getAvailableSatellites() throws SQLException {
@@ -140,6 +146,8 @@ public class SkyscraperOrm
         preparedStatement.setString(2,entityType.getSimpleName());
         preparedStatement.setString(3,text);
         preparedStatement.executeUpdate();
+
+        logger.info(String.format("%s %s %s",operation.toString(),entityType.getSimpleName(),text));
     }
 
     public void beginTransaction() throws SQLException {
@@ -296,6 +304,9 @@ public class SkyscraperOrm
     }
 
     public ServiceEntity createService(@NotNull Service service, @NotNull TransponderEntity transponderEntity) throws SQLException {
+        if (service.channelName.contains("\0"))
+            service.channelName = service.channelName.replace("\0","");
+
         PreparedStatement ps = connection.prepareStatement("INSERT INTO services (transponder, serviceid, name, runningstatus, fta, servicetype) VALUES (?,?,?,?,?,?) RETURNING *");
         ps.setInt(1,transponderEntity.id);
         ps.setInt(2,service.serviceId);
