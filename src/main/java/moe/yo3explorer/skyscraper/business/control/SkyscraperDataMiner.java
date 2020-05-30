@@ -7,6 +7,8 @@ import moe.yo3explorer.skyscraper.business.entity.pojo.Satellite;
 import moe.yo3explorer.skyscraper.business.entity.pojo.ScheduledEvent;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Service;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Transponder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
@@ -16,8 +18,10 @@ import java.util.Optional;
 
 public class SkyscraperDataMiner {
     private SkyscraperOrm orm;
+    private Logger logger;
     public SkyscraperDataMiner(SkyscraperOrm orm) {
         this.orm = orm;
+        this.logger = LogManager.getLogger(getClass());
     }
 
     public void mineFromSatellite(@NotNull Satellite satellite) throws SQLException {
@@ -53,6 +57,10 @@ public class SkyscraperDataMiner {
                     if (!orm.testForScheduledEvent(scheduledEvent,serviceEntity))
                     {
                         orm.createScheduledEvent(scheduledEvent,serviceEntity);
+                    }
+                    else
+                    {
+                        logger.trace(String.format("Scheduled event \"%s\" already known.",scheduledEvent.title));
                     }
                 }
             }

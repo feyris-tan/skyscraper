@@ -5,11 +5,12 @@ import moe.yo3explorer.skyscraper.business.control.*;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Satellite;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.List;
 
 public class SkyscraperService {
@@ -17,11 +18,14 @@ public class SkyscraperService {
     private SkyscraperOrm orm;
     private ZapperService zapperService;
     private SkyscraperDataMiner dataMiner;
+    private Logger logger;
 
     public SkyscraperService() throws IOException, SQLException {
         orm = new SkyscraperOrm();
         zapperService = new ZapperService();
         dataMiner = new SkyscraperDataMiner(orm);
+        logger = LogManager.getLogger(getClass());
+        logger.info("Construct Skyscraper Service");
     }
 
     public void perform() throws SQLException {
@@ -37,6 +41,7 @@ public class SkyscraperService {
         List<TransponderEntity> transpondersForSatellite = orm.getTranspondersForSatellite(satelliteEntity.id);
         for (TransponderEntity transponderEntity : transpondersForSatellite) {
             boolean sucessful;
+            logger.info(String.format("About to zap to: %s %d/%s/%d,",satelliteEntity.name,(int)transponderEntity.frequency,transponderEntity.polarization.toString(),transponderEntity.symbolrate));
             File file = zapperService.tryZapTo(satelliteEntity.diseqc, transponderEntity.frequency, transponderEntity.symbolrate, transponderEntity.polarization, transponderEntity.s2);
             if (!file.exists())
                 sucessful = false;
@@ -44,12 +49,15 @@ public class SkyscraperService {
                 sucessful = false;
             else
                 sucessful = true;
+            logger.info("Zapping%ssucessful.",sucessful ? " " : " NOT ");
 
             orm.beginTransaction();
             orm.markTransponderAsScanned(transponderEntity);
             if (sucessful) {
+                logger.info("Begin data mining from transport stream.");
                 orm.markTransponderAsValid(transponderEntity);
-                List<Satellite> satellites = tryScrapeFile(file);
+                SkyscraperDvbReceiver dvbReceiver = tryScrapeFile(file);
+                List<Satellite> satellites = dvbReceiver.getSatellites();
                 if (satellites.size() > 0) {
                     for (Satellite satellite : satellites) {
                         dataMiner.mineFromSatellite(satellite);
@@ -59,12 +67,13 @@ public class SkyscraperService {
                 {
                     throw new RuntimeException("Don't know how to scrape from this transponder.");
                 }
+                logger.info("Finish data mining from transport stream.");
             }
             orm.flushTransaction();
         }
     }
 
-    public List<Satellite> tryScrapeFile(File file)
+    public SkyscraperDvbReceiver tryScrapeFile(File file)
     {
         try {
             return scrapeFile(file);
@@ -73,13 +82,15 @@ public class SkyscraperService {
         }
     }
 
-    public List<Satellite> scrapeFile(@NotNull File file) throws IOException {
+    public SkyscraperDvbReceiver scrapeFile(@NotNull File file) throws IOException {
         long packages = file.length() / 188;
         FileInputStream fis = new FileInputStream(file);
-        return scrapeInputStream(fis,packages);
+        SkyscraperDvbReceiver result = scrapeInputStream(fis,packages);
+        fis.close();
+        return result;
     }
 
-    public List<Satellite> scrapeInputStream(InputStream is, long numPackages) throws IOException {
+    public SkyscraperDvbReceiver scrapeInputStream(InputStream is, long numPackages) throws IOException {
         SkyscraperDvbReceiver dvbReceiver = new SkyscraperDvbReceiver();
 
         DvbContext dvbContext = new DvbContext();
@@ -92,6 +103,6 @@ public class SkyscraperService {
             dvbContext.pushPacket(buffer);
         }
 
-        return dvbReceiver.getSatellites();
+        return dvbReceiver;
     }
 }
