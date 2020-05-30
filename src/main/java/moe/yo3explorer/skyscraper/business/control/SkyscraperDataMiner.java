@@ -44,25 +44,40 @@ public class SkyscraperDataMiner {
             {
                 transponderEntity = orm.createTransponder(transponder,satelliteEntity);
             }
-            if (transponder.listServices() == null)
-                continue;
-            for (Service service : transponder.listServices()) {
-                ServiceEntity serviceEntity = orm.getService(service,transponderEntity);
-                if (serviceEntity == null)
+            mineFromTransponder(transponder, transponderEntity);
+        }
+    }
+
+    public void mineFromTransponder(Transponder transponder, TransponderEntity transponderEntity) throws SQLException {
+        if (transponder.listServices() == null)
+            return;
+        for (Service service : transponder.listServices()) {
+            ServiceEntity serviceEntity = orm.getService(service,transponderEntity);
+            if (serviceEntity == null)
+            {
+                serviceEntity = orm.createService(service,transponderEntity);
+            }
+            orm.markServiceAsSeen(serviceEntity);
+            int totalEvents = 0;
+            int hits = 0;
+            int misses = 0;
+
+            for (ScheduledEvent scheduledEvent : service.listScheduledEvents()) {
+                totalEvents++;
+                if (!orm.testForScheduledEvent(scheduledEvent,serviceEntity))
                 {
-                    serviceEntity = orm.createService(service,transponderEntity);
+                    orm.createScheduledEvent(scheduledEvent,serviceEntity);
+                    hits++;
                 }
-                orm.markServiceAsSeen(serviceEntity);
-                for (ScheduledEvent scheduledEvent : service.listScheduledEvents()) {
-                    if (!orm.testForScheduledEvent(scheduledEvent,serviceEntity))
-                    {
-                        orm.createScheduledEvent(scheduledEvent,serviceEntity);
-                    }
-                    else
-                    {
-                        logger.trace(String.format("Scheduled event \"%s\" already known.",scheduledEvent.title));
-                    }
+                else
+                {
+                    logger.trace(String.format("Scheduled event \"%s\" already known.",scheduledEvent.title));
+                    misses++;
                 }
+            }
+            if (totalEvents > 0)
+            {
+                logger.info(String.format("Got %d events on %s. (%d new, %d known)",totalEvents,serviceEntity.name,misses,hits));
             }
         }
     }

@@ -5,6 +5,8 @@ import moe.yo3explorer.skyscraper.business.control.*;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Satellite;
+import moe.yo3explorer.skyscraper.business.entity.pojo.Service;
+import moe.yo3explorer.skyscraper.business.entity.pojo.Transponder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +51,7 @@ public class SkyscraperService {
                 sucessful = false;
             else
                 sucessful = true;
-            logger.info("Zapping%ssucessful.",sucessful ? " " : " NOT ");
+            logger.info(String.format("Zapping%ssucessful.",sucessful ? " " : " NOT "));
 
             orm.beginTransaction();
             orm.markTransponderAsScanned(transponderEntity);
@@ -58,10 +60,16 @@ public class SkyscraperService {
                 orm.markTransponderAsValid(transponderEntity);
                 SkyscraperDvbReceiver dvbReceiver = tryScrapeFile(file);
                 List<Satellite> satellites = dvbReceiver.getSatellites();
-                if (satellites.size() > 0) {
+                List<Transponder> transponders = dvbReceiver.getTransponders();
+                if (satellites != null) {
                     for (Satellite satellite : satellites) {
                         dataMiner.mineFromSatellite(satellite);
                     }
+                }
+                else if (dvbReceiver.getNumEvents() > 0 && transponders.size() == 1)
+                {
+                    Transponder transponder = transponders.get(0);
+                    dataMiner.mineFromTransponder(transponder,transponderEntity);
                 }
                 else
                 {

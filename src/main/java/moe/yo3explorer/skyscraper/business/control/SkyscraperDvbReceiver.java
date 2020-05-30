@@ -9,16 +9,14 @@ import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
 import moe.yo3explorer.skyscraper.business.entity.pojo.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class SkyscraperDvbReceiver implements DvbReceiver {
 
     private ArrayList<Network> networks;
     private ArrayList<Transponder> transponders;
     private ArrayList<Satellite> satellites;
+    private long numEvents;
 
     private @NotNull Network getNetwork(int networkId)
     {
@@ -172,6 +170,8 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
         {
             scheduledEvent.synopsis = extendedEvent.getText();
         }
+
+        numEvents++;
     }
 
     @Override
@@ -181,5 +181,16 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
 
     public ArrayList<Satellite> getSatellites() {
         return satellites;
+    }
+
+    public long getNumEvents() {
+        return numEvents;
+    }
+
+    public List<Transponder> getTransponders()
+    {
+        if (transponders == null)
+            return Collections.emptyList();
+        return Collections.unmodifiableList(transponders);
     }
 }
