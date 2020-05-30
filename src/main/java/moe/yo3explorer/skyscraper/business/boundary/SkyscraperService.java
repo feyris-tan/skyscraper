@@ -21,6 +21,7 @@ public class SkyscraperService {
     private ZapperService zapperService;
     private SkyscraperDataMiner dataMiner;
     private Logger logger;
+    public static final long ONE_DAY = 1000 * 3600 * 24;
 
     public SkyscraperService() throws IOException, SQLException {
         orm = new SkyscraperOrm();
@@ -42,6 +43,17 @@ public class SkyscraperService {
     public void scrapeSatelliteEntity(@NotNull SatelliteEntity satelliteEntity) throws SQLException {
         List<TransponderEntity> transpondersForSatellite = orm.getTranspondersForSatellite(satelliteEntity.id);
         for (TransponderEntity transponderEntity : transpondersForSatellite) {
+
+            if (transponderEntity.lastscanned != null) {
+                long now = System.currentTimeMillis();
+                long backthen = transponderEntity.lastscanned.getTime();
+                long difference = now - backthen;
+                if (difference < ONE_DAY) {
+                    logger.info(String.format("Skip transponder: %s %d/%s/%d,", satelliteEntity.name, (int) transponderEntity.frequency, transponderEntity.polarization.toString(), transponderEntity.symbolrate));
+                    continue;
+                }
+            }
+
             boolean sucessful;
             logger.info(String.format("About to zap to: %s %d/%s/%d,",satelliteEntity.name,(int)transponderEntity.frequency,transponderEntity.polarization.toString(),transponderEntity.symbolrate));
             File file = zapperService.tryZapTo(satelliteEntity.diseqc, transponderEntity.frequency, transponderEntity.symbolrate, transponderEntity.polarization, transponderEntity.s2);
