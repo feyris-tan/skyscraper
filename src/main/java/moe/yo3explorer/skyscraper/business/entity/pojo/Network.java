@@ -1,6 +1,7 @@
 package moe.yo3explorer.skyscraper.business.entity.pojo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,5 +47,12 @@ public class Network {
                 "networkId=" + networkId +
                 ", services=" + services +
                 '}';
+    }
+
+    public List<Transponder> getTransponders()
+    {
+        if (transponders == null)
+            return Collections.emptyList();
+        return Collections.unmodifiableList(transponders);
     }
 }

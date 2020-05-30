@@ -4,6 +4,7 @@ import moe.yo3explorer.dvb4j.DvbContext;
 import moe.yo3explorer.skyscraper.business.control.*;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
+import moe.yo3explorer.skyscraper.business.entity.pojo.Network;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Satellite;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Service;
 import moe.yo3explorer.skyscraper.business.entity.pojo.Transponder;
@@ -73,15 +74,26 @@ public class SkyscraperService {
                 SkyscraperDvbReceiver dvbReceiver = tryScrapeFile(file);
                 List<Satellite> satellites = dvbReceiver.getSatellites();
                 List<Transponder> transponders = dvbReceiver.getTransponders();
+                List<Network> networks = dvbReceiver.getNetworks();
                 if (satellites != null) {
                     for (Satellite satellite : satellites) {
                         dataMiner.mineFromSatellite(satellite);
                     }
                 }
-                else if (dvbReceiver.getNumEvents() > 0 && transponders.size() == 1)
+                else if (transponders.size() == 1)
                 {
                     Transponder transponder = transponders.get(0);
                     dataMiner.mineFromTransponder(transponder,transponderEntity);
+                }
+                else if (satellites == null && transponders.size() == 0 && dvbReceiver.getNumEvents() == 0)
+                {
+                    logger.info("Transport stream does not contain any services. Discarded.");
+                }
+                else if (networks.size() > 0 && transponders.size() > 0)
+                {
+                    for (Network network : networks) {
+                        dataMiner.mineFromNetwork(satelliteEntity,network);
+                    }
                 }
                 else
                 {

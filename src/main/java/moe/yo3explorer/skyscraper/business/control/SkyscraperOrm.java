@@ -18,6 +18,7 @@ import java.sql.*;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 public class SkyscraperOrm
@@ -127,6 +128,9 @@ public class SkyscraperOrm
     }
 
     public void persistSatellite(@NotNull SatelliteEntity satelliteEntity) throws SQLException {
+        if (satelliteEntity.name.contains("\0"))
+            satelliteEntity.name = satelliteEntity.name.replace("\0","");
+
         PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO satellites (orbitalposition, cardinaldirection, name) VALUES (?,?,?) RETURNING *");
         preparedStatement.setDouble(1,satelliteEntity.orbitalposition);
         preparedStatement.setString(2,satelliteEntity.cardinaldirection);
@@ -304,8 +308,12 @@ public class SkyscraperOrm
     }
 
     public ServiceEntity createService(@NotNull Service service, @NotNull TransponderEntity transponderEntity) throws SQLException {
+        if (service.channelName == null)
+            service.channelName = "";
         if (service.channelName.contains("\0"))
             service.channelName = service.channelName.replace("\0","");
+        if (service.runningStatus == null)
+            service.runningStatus = RunningStatus.UNDEFINED;
 
         PreparedStatement ps = connection.prepareStatement("INSERT INTO services (transponder, serviceid, name, runningstatus, fta, servicetype) VALUES (?,?,?,?,?,?) RETURNING *");
         ps.setInt(1,transponderEntity.id);
@@ -352,6 +360,16 @@ public class SkyscraperOrm
     }
 
     public void createScheduledEvent(@NotNull ScheduledEvent scheduledEvent, @NotNull ServiceEntity serviceEntity) throws SQLException {
+        if (scheduledEvent.title != null)
+            if (scheduledEvent.title.contains("\0"))
+                scheduledEvent.title = scheduledEvent.title.replace("\0","");
+        if (scheduledEvent.subtitle != null)
+            if (scheduledEvent.subtitle.contains("\0"))
+                scheduledEvent.subtitle = scheduledEvent.subtitle.replace("\0","");
+        if (scheduledEvent.synopsis != null)
+            if (scheduledEvent.synopsis.contains("\0"))
+                scheduledEvent.synopsis = scheduledEvent.synopsis.replace("\0","");
+
         PreparedStatement ps = connection.prepareStatement("INSERT INTO events (service, starttime, endtime, runningstatus, eventid, encrypted, title, subtitle, synopsis) VALUES (?,?,?,?,?,?,?,?,?)");
         ps.setInt(1,serviceEntity.id);
         ps.setTimestamp(2,new Timestamp(scheduledEvent.startTime.getTime()));
@@ -372,5 +390,11 @@ public class SkyscraperOrm
         ps.setInt(2,serviceEntity.id);
         ps.executeUpdate();
         serviceEntity.lastseen = timestamp;
+    }
+
+    public TransponderEntity findTransponderBySatelliteAndTsId(@NotNull SatelliteEntity satelliteEntity, int tsId) throws SQLException {
+        List<TransponderEntity> transpondersForSatellite = getTranspondersForSatellite(satelliteEntity.id);
+        Optional<TransponderEntity> first = transpondersForSatellite.stream().filter(x -> x.transportstream == tsId).findFirst();
+        return first.orElse(null);
     }
 }

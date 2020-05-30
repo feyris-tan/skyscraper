@@ -193,4 +193,11 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
             return Collections.emptyList();
         return Collections.unmodifiableList(transponders);
     }
+
+    public List<Network> getNetworks()
+    {
+        if (networks == null)
+            return Collections.emptyList();
+        return Collections.unmodifiableList(networks);
+    }
 }

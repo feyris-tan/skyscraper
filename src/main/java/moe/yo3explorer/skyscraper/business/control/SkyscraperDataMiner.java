@@ -3,10 +3,7 @@ package moe.yo3explorer.skyscraper.business.control;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
 import moe.yo3explorer.skyscraper.business.entity.ServiceEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
-import moe.yo3explorer.skyscraper.business.entity.pojo.Satellite;
-import moe.yo3explorer.skyscraper.business.entity.pojo.ScheduledEvent;
-import moe.yo3explorer.skyscraper.business.entity.pojo.Service;
-import moe.yo3explorer.skyscraper.business.entity.pojo.Transponder;
+import moe.yo3explorer.skyscraper.business.entity.pojo.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +75,17 @@ public class SkyscraperDataMiner {
             if (totalEvents > 0)
             {
                 logger.info(String.format("Got %d events on %s. (%d new, %d known)",totalEvents,serviceEntity.name,misses,hits));
+            }
+        }
+    }
+
+    public void mineFromNetwork(SatelliteEntity satelliteEntity, @NotNull Network network) throws SQLException {
+        List<Transponder> transponders = network.getTransponders();
+        for (Transponder transponder : transponders) {
+            TransponderEntity transponderBySatelliteAndTsId = orm.findTransponderBySatelliteAndTsId(satelliteEntity, transponder.transportStreamId);
+            if (transponderBySatelliteAndTsId != null)
+            {
+                mineFromTransponder(transponder,transponderBySatelliteAndTsId);
             }
         }
     }
