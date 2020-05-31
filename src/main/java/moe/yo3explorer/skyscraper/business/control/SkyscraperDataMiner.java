@@ -56,25 +56,25 @@ public class SkyscraperDataMiner {
             }
             orm.markServiceAsSeen(serviceEntity);
             int totalEvents = 0;
-            int hits = 0;
-            int misses = 0;
+            int newOnes = 0;
+            int knownOnes = 0;
 
             for (ScheduledEvent scheduledEvent : service.listScheduledEvents()) {
                 totalEvents++;
                 if (!orm.testForScheduledEvent(scheduledEvent,serviceEntity))
                 {
                     orm.createScheduledEvent(scheduledEvent,serviceEntity);
-                    hits++;
+                    newOnes++;
                 }
                 else
                 {
                     logger.trace(String.format("Scheduled event \"%s\" already known.",scheduledEvent.title));
-                    misses++;
+                    knownOnes++;
                 }
             }
             if (totalEvents > 0)
             {
-                logger.info(String.format("Got %d events on %s. (%d new, %d known)",totalEvents,serviceEntity.name,misses,hits));
+                logger.info(String.format("Got %d events on %s. (%d new, %d known)",totalEvents,serviceEntity.name,newOnes,knownOnes));
             }
         }
     }

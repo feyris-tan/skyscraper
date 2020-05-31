@@ -128,6 +128,8 @@ public class SkyscraperOrm
     }
 
     public void persistSatellite(@NotNull SatelliteEntity satelliteEntity) throws SQLException {
+        if (satelliteEntity.name == null)
+            satelliteEntity.name = "";
         if (satelliteEntity.name.contains("\0"))
             satelliteEntity.name = satelliteEntity.name.replace("\0","");
 
