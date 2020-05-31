@@ -32,9 +32,8 @@ public class SkyscraperService {
         logger.info("Construct Skyscraper Service");
     }
 
-    public void perform() throws SQLException {
-        if (!zapperService.isAvailable())
-            throw new NoDvbFrontendException();
+    public void perform() throws SQLException
+    {
         List<SatelliteEntity> availableSatellites = orm.getAvailableSatellites();
         for (SatelliteEntity satelliteEntity : availableSatellites) {
             scrapeSatelliteEntity(satelliteEntity);
@@ -57,7 +56,7 @@ public class SkyscraperService {
 
             boolean sucessful;
             logger.info(String.format("About to zap to: %s %d/%s/%d,",satelliteEntity.name,(int)transponderEntity.frequency,transponderEntity.polarization.toString(),transponderEntity.symbolrate));
-            File file = zapperService.tryZapTo(satelliteEntity.diseqc, transponderEntity.frequency, transponderEntity.symbolrate, transponderEntity.polarization, transponderEntity.s2);
+            File file = zapperService.tryZapTo(satelliteEntity.diseqc, transponderEntity.frequency, transponderEntity.symbolrate, transponderEntity.polarization, transponderEntity.s2,transponderEntity.modulation);
             if (!file.exists())
                 sucessful = false;
             else if (file.length() == 0)
