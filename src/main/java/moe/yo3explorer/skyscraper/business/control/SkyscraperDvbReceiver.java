@@ -7,6 +7,8 @@ import moe.yo3explorer.dvb4j.model.descriptors.*;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
 import moe.yo3explorer.skyscraper.business.entity.pojo.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,6 +19,8 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
     private ArrayList<Transponder> transponders;
     private ArrayList<Satellite> satellites;
     private long numEvents;
+    private static Logger logger;
+    private int packetLoss;
 
     private @NotNull Network getNetwork(int networkId)
     {
@@ -81,7 +85,13 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
         }
     }
 
-    public SkyscraperDvbReceiver() { }
+    public SkyscraperDvbReceiver() {
+        if (logger == null)
+        {
+            logger = LogManager.getLogger(getClass());
+            logger.info("DVB receiver initialized.");
+        }
+    }
 
     @Override public void onNewPatEntry(@NotNull PATEntry patEntry) {
     }
@@ -176,7 +186,7 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
 
     @Override
     public void onPacketLoss(int i, int i1, int i2) {
-
+        packetLoss++;
     }
 
     public ArrayList<Satellite> getSatellites() {
@@ -199,5 +209,9 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
         if (networks == null)
             return Collections.emptyList();
         return Collections.unmodifiableList(networks);
+    }
+
+    public int getPacketLoss() {
+        return packetLoss;
     }
 }

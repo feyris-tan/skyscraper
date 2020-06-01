@@ -28,7 +28,7 @@
         <dependency>
             <groupId>moe.yo3explorer</groupId>
             <artifactId>dvb4j</artifactId>
-            <version>1.23-SNAPSHOT</version>
+            <version>1.26-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

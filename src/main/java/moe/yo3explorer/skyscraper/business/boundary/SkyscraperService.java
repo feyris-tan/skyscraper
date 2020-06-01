@@ -132,6 +132,11 @@ public class SkyscraperService {
             if (is.read(buffer,0,188) != 188)
                 throw new IOException("incomplete read");
             dvbContext.pushPacket(buffer);
+            if (dvbReceiver.getPacketLoss() == 10)
+            {
+                logger.info("Too much packet loss! Stop scraping early!");
+                break;
+            }
         }
 
         return dvbReceiver;
