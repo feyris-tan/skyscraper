@@ -18,6 +18,7 @@ import java.util.List;
 
 public class SkyscraperService {
 
+    private LibrarianService librarianService;
     private SkyscraperOrm orm;
     private ZapperService zapperService;
     private SkyscraperDataMiner dataMiner;
@@ -29,18 +30,18 @@ public class SkyscraperService {
         zapperService = new ZapperService();
         dataMiner = new SkyscraperDataMiner(orm);
         logger = LogManager.getLogger(getClass());
+        librarianService = new LibrarianService();
         logger.info("Construct Skyscraper Service");
     }
 
-    public void perform() throws SQLException
-    {
+    public void perform() throws SQLException, IOException {
         List<SatelliteEntity> availableSatellites = orm.getAvailableSatellites();
         for (SatelliteEntity satelliteEntity : availableSatellites) {
             scrapeSatelliteEntity(satelliteEntity);
         }
     }
 
-    public void scrapeSatelliteEntity(@NotNull SatelliteEntity satelliteEntity) throws SQLException {
+    public void scrapeSatelliteEntity(@NotNull SatelliteEntity satelliteEntity) throws SQLException, IOException {
         List<TransponderEntity> transpondersForSatellite = orm.getTranspondersForSatellite(satelliteEntity.id);
         for (TransponderEntity transponderEntity : transpondersForSatellite) {
 
@@ -69,6 +70,7 @@ public class SkyscraperService {
             orm.markTransponderAsScanned(transponderEntity);
             if (sucessful) {
                 logger.info("Begin data mining from transport stream.");
+                librarianService.catalogue(satelliteEntity,transponderEntity,file);
                 orm.markTransponderAsValid(transponderEntity);
                 SkyscraperDvbReceiver dvbReceiver = tryScrapeFile(file);
                 List<Satellite> satellites = dvbReceiver.getSatellites();
