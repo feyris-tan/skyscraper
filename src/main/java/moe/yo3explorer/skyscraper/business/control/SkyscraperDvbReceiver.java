@@ -187,6 +187,7 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
     @Override
     public void onPacketLoss(int i, int i1, int i2) {
         packetLoss++;
+        logger.warn(String.format("Packet loss! (%d)",packetLoss));
     }
 
     public ArrayList<Satellite> getSatellites() {
