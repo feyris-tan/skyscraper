@@ -23,7 +23,8 @@ public class SkyscraperService {
     private ZapperService zapperService;
     private SkyscraperDataMiner dataMiner;
     private Logger logger;
-    public static final long ONE_DAY = 1000 * 3600 * 24;
+    public final long HOUR_SKEW = 0;
+    public final long ONE_DAY = 1000 * 3600 * (24 + HOUR_SKEW);
 
     public SkyscraperService() throws IOException, SQLException {
         orm = new SkyscraperOrm();

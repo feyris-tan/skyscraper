@@ -63,7 +63,7 @@ public class SkyscraperOrm
 
     public List<TransponderEntity> getTranspondersForSatellite(int satId) throws SQLException {
         LinkedList<TransponderEntity> result = new LinkedList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM transponders WHERE satellite = ? ORDER BY id");
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM transponders WHERE satellite = ? AND ignore = FALSE ORDER BY id");
         preparedStatement.setInt(1,satId);
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next())
