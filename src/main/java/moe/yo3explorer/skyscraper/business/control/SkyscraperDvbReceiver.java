@@ -1,8 +1,10 @@
 package moe.yo3explorer.skyscraper.business.control;
 
 import moe.yo3explorer.dvb4j.DvbReceiver;
+import moe.yo3explorer.dvb4j.PsiSection;
 import moe.yo3explorer.dvb4j.decoders.DescriptorDecoder;
 import moe.yo3explorer.dvb4j.model.*;
+import moe.yo3explorer.dvb4j.model.descriptorEntities.ServiceListEntry;
 import moe.yo3explorer.dvb4j.model.descriptors.*;
 import moe.yo3explorer.skyscraper.business.entity.SatelliteEntity;
 import moe.yo3explorer.skyscraper.business.entity.TransponderEntity;
@@ -21,6 +23,7 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
     private long numEvents;
     private static Logger logger;
     private int packetLoss;
+    private int invalidTablesEncountered;
 
     private @NotNull Network getNetwork(int networkId)
     {
@@ -175,6 +178,12 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
             scheduledEvent.subtitle = shortEvent.getText();
         }
 
+        if (eitEvent.getDescriptorList() == null)
+        {
+            logger.warn("Found broken EIT Event!");
+            return;
+        }
+
         ExtendedEventDescriptor extendedEvent = DescriptorDecoder.getDescriptorFromList(eitEvent.getDescriptorList(), ExtendedEventDescriptor.class);
         if (extendedEvent != null)
         {
@@ -188,6 +197,28 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
     public void onPacketLoss(int i, int i1, int i2) {
         packetLoss++;
         logger.warn(String.format("Packet loss! (%d)",packetLoss));
+    }
+
+    @Override
+    public void onUnknownPsi(int i, @NotNull PsiSection psiSection) {
+        int tableId = psiSection.getTableId();
+        if (tableId >= 0x04 && tableId <= 0x3f)
+            invalidTablesEncountered++;
+        switch (tableId)
+        {
+            case 0x43:
+            case 0x44:
+            case 0x45:
+            case 0x47:
+            case 0x48:
+            case 0x49:
+            case 0x7c:
+            case 0x7d:
+            case 0xff:
+                invalidTablesEncountered++;
+            default:
+                break;
+        }
     }
 
     public ArrayList<Satellite> getSatellites() {
@@ -214,5 +245,9 @@ public class SkyscraperDvbReceiver implements DvbReceiver {
 
     public int getPacketLoss() {
         return packetLoss;
+    }
+
+    public int getInvalidTablesEncountered() {
+        return invalidTablesEncountered;
     }
 }

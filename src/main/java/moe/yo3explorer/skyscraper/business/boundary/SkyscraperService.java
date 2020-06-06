@@ -23,7 +23,7 @@ public class SkyscraperService {
     private ZapperService zapperService;
     private SkyscraperDataMiner dataMiner;
     private Logger logger;
-    public final long HOUR_SKEW = 0;
+    public final long HOUR_SKEW = -16;
     public final long ONE_DAY = 1000 * 3600 * (24 + HOUR_SKEW);
 
     public SkyscraperService() throws IOException, SQLException {
@@ -138,6 +138,11 @@ public class SkyscraperService {
             if (dvbReceiver.getPacketLoss() == 10)
             {
                 logger.info("Too much packet loss! Stop scraping early!");
+                break;
+            }
+            else if (dvbReceiver.getInvalidTablesEncountered() == 10)
+            {
+                logger.info("Too many weird tables in this transport stream! Stop scraping early!");
                 break;
             }
         }
