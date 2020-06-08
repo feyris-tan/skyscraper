@@ -4,5 +4,6 @@ public enum AuditOperation
 {
     TEST,
     ADD,
+    UPDATE,
     REMOVE
 }

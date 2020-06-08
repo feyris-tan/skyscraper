@@ -13,6 +13,8 @@ import java.util.UUID;
 
 public class ZapperService {
 
+    private static final int ZAPPING_DURATION = 60;
+
     private Logger logger;
     public ZapperService()
     {
@@ -89,7 +91,7 @@ public class ZapperService {
                 "-P",
                 "until",
                 "-s",
-                "60",
+                Integer.toString(ZAPPING_DURATION),
                 "-O",
                 "file",
                 tsFile.getName()

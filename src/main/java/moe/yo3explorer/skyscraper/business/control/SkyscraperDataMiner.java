@@ -59,6 +59,14 @@ public class SkyscraperDataMiner {
             int newOnes = 0;
             int knownOnes = 0;
 
+            if (serviceEntity.name == null || serviceEntity.name.equals(""))
+            {
+                if (service.channelName != null && !service.channelName.equals(""))
+                {
+                    orm.setChannelName(serviceEntity,service.channelName);
+                }
+            }
+
             for (ScheduledEvent scheduledEvent : service.listScheduledEvents()) {
                 totalEvents++;
                 if (!orm.testForScheduledEvent(scheduledEvent,serviceEntity))

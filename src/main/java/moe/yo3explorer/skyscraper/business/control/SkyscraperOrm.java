@@ -399,4 +399,16 @@ public class SkyscraperOrm
         Optional<TransponderEntity> first = transpondersForSatellite.stream().filter(x -> x.transportstream == tsId).findFirst();
         return first.orElse(null);
     }
+
+    public void setChannelName(@NotNull ServiceEntity entity, String name) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement("UPDATE services SET name = ? WHERE id = ?");
+        preparedStatement.setString(1,name);
+        preparedStatement.setInt(2,entity.id);
+        int i = preparedStatement.executeUpdate();
+        if (i != 1)
+            throw new RuntimeException("setChannelName failed");
+
+        audit(AuditOperation.UPDATE,Service.class,String.format("Channel Name for service %d is now %s",entity.id,name));
+        entity.name = name;
+    }
 }
