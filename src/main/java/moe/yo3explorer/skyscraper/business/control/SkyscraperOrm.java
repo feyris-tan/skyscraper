@@ -29,9 +29,13 @@ public class SkyscraperOrm
         properties.load(resourceAsStream);
         resourceAsStream.close();
 
-        connection = DriverManager.getConnection(properties.getProperty("url"),
-                properties.getProperty("username"),
-                properties.getProperty("password"));
+        Properties postgresProp = new Properties();
+        postgresProp.put("user",properties.getProperty("username"));
+        postgresProp.put("password",properties.getProperty("password"));
+        postgresProp.put("ApplicationName","Skyscraper");
+
+        connection = DriverManager.getConnection(properties.getProperty("url"), postgresProp);
+
         connection.setSchema("skyscraper");
 
         logger = LogManager.getLogger(getClass());
