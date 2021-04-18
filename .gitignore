@@ -33,7 +33,15 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
+
+# Compromising data
 /src/main/resources/application.properties
 /test2.cnf
 /test2.ts
 /src/main/resources/sql.properties
+
+# Visual Studio
+/.vs/skyscraper2/v15
+/.vs/skyscraper2/DesignTimeBuild
+/obj/Debug/netcoreapp2.1
+/obj
